@@ -1,0 +1,115 @@
+#include <boost/unordered_map.hpp>
+#include <iostream>
+#include <string>
+
+using namespace std;
+
+/****************************************************************************************************/
+struct node{
+    node* pre;
+    node* next;
+    int key;
+    int value;
+   
+    node(int k, int v):key(k),value(v),pre(NULL),next(NULL){};
+};
+
+typedef unordered_map<int, node*> umap;
+
+class LRUCache{
+    umap mp;
+    int cap;
+    int cur;
+    node* head;
+    node* tail;
+public:
+    LRUCache(int capacity) {
+        if (capacity < 0) return;
+        cap = capacity;
+        cur = 0;
+        mp.clear();
+        head = new node(-1,-1);
+        tail = new node(-1,-1);
+        head->next = tail;
+        tail->pre = head;
+    }
+   
+    int get(int key) {
+        umap::iterator it = mp.find(key);
+       
+        if (it != mp.end())
+        {
+            node* p = it->second;
+            p->pre->next = p->next;
+            p->next->pre = p->pre;
+            putToHead(p); //put node p to list head
+            return p->value;
+        }
+        else
+        {
+            return -1;
+        }
+       
+       
+    }
+   
+    void set(int key, int value) {
+        if (cap < 1) return;
+        umap::iterator it = mp.find(key);
+       
+        if (it != mp.end())
+        {//search key is ok
+            node* p = it->second;
+            p->pre->next = p->next;
+            p->next->pre = p->pre;
+            p->value = value;
+            putToHead(p);
+        }
+        else
+        {
+            node* p = new node(key, value);
+            mp[key] = p;
+            cur ++;
+            putToHead(p);
+           
+            if (cur > cap)
+            {
+                cur--;
+                p = tail->pre;
+               
+                p->pre->next = tail;
+                tail->pre = p->pre;
+                it = mp.find(p->key);
+                mp.erase(it);
+                delete p;
+               
+            }
+        }
+    }
+   
+    void putToHead(node* p){
+        p->next = head->next;
+        p->pre = head;
+        head->next->pre = p;
+        head->next = p;
+    }
+};
+/****************************************************************************************************/
+
+
+int main ()
+{
+     LRUCache *lcache = new LRUCache(5);
+    
+     lcache->set(1,11);
+     lcache->set(2,22);
+     lcache->set(3,33);
+     lcache->set(4,44);
+     lcache->set(5,55);
+     lcache->set(6,66);
+     lcache->outprint();
+     printf ("key = 2 value = %d\n---------------------------------------\n",lcache->get(2));    
+     lcache->outprint();
+     return 0;
+}
+
